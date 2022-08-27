@@ -1,5 +1,5 @@
-import 'chartjs-adapter-moment';
 import { createCanvas } from "canvas";
+import 'chartjs-adapter-moment';
 import { AutocompleteContext, CommandContext, CommandOptionType, Message, SlashCommand, SlashCreator } from "slash-create";
 import { compareTwoStrings } from "string-similarity";
 import { Assets, bitvavo, chart } from "../helpers/bitvavo";
@@ -7,6 +7,7 @@ import { getCurrencySign } from "../helpers/currency";
 
 import { Chart } from "chart.js";
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
+import { ErrorResponse } from '../helpers/response';
 
 export default class SlashCrypto extends SlashCommand {
 	constructor(creator: SlashCreator) {
@@ -22,8 +23,8 @@ export default class SlashCrypto extends SlashCommand {
 					autocomplete: true
 				},
 				{
-					name: "interval",
-					description: "The interval to check",
+					name: "range",
+					description: "The time range of the chart",
 					required: false,
 					type: CommandOptionType.STRING,
 					choices: ["1h", "1d", "7d", "30d", "1y", "all"].map(a => {
@@ -91,7 +92,10 @@ export default class SlashCrypto extends SlashCommand {
 
 		const asset = assets.find(a => a.name.toLowerCase() === ctx.options.crypto.toLowerCase() || a.symbol.toLowerCase() === ctx.options.crypto.toLowerCase());
 		if (!asset)
-			return ctx.send("I couldn't find that crypto currency");
+			return ctx.send(ErrorResponse("Invalid Crypto", "The crypto currency you specified is not valid. Discord will automatically autocomplete the crypto currency while you type it."));
+
+		if (!ctx.options.range && !["1h", "1d", "7d", "30d", "1y", "all"].includes(ctx.options.range))
+			return ctx.send(ErrorResponse("Invalid range", "Please specify a valid range"));
 
 		//TODO: Keep track per user
 		TopCrypto.findOrCreate({
@@ -109,7 +113,7 @@ export default class SlashCrypto extends SlashCommand {
 		const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
 
 		const canvas = createCanvas(750, 350);
-		const chartData = await chart(asset.symbol, ctx.options.interval || "1h");
+		const chartData = await chart(asset.symbol, ctx.options.range || "1h");
 		const myChart = new Chart(canvas.getContext('2d'), {
 			type: 'line',
 			options: {
