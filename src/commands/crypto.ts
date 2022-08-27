@@ -6,6 +6,7 @@ import { Assets, bitvavo, chart } from "../helpers/bitvavo";
 import { getCurrencySign } from "../helpers/currency";
 
 import { Chart } from "chart.js";
+import { TopCrypto } from '../helpers/models/TopCrypto.model';
 
 export default class SlashCrypto extends SlashCommand {
 	constructor(creator: SlashCreator) {
@@ -56,10 +57,18 @@ export default class SlashCrypto extends SlashCommand {
 	}
 
 	async autocomplete(ctx: AutocompleteContext): Promise<any> {
-		const assets = await Assets.get();
 
-		if (!ctx.options.crypto || !ctx.options.crypto.length)
-			return ctx.sendResults(assets.map(a => ({ name: a.name, value: a.symbol })));
+		if (!ctx.options.crypto || !ctx.options.crypto.length) {
+			const top = await TopCrypto.findAll({
+				order: [
+					['uses', 'DESC']
+				],
+				limit: 10
+			});
+			return ctx.sendResults(top.map(a => ({ name: a.name, value: a.symbol })));
+		}
+
+		const assets = await Assets.get();
 
 		const mapped: [string, string, number][] = assets.map(a => {
 			let score: number;
@@ -80,14 +89,22 @@ export default class SlashCrypto extends SlashCommand {
 		await ctx.defer();
 		const assets = await Assets.get();
 
-
 		const asset = assets.find(a => a.name.toLowerCase() === ctx.options.crypto.toLowerCase() || a.symbol.toLowerCase() === ctx.options.crypto.toLowerCase());
 		if (!asset)
 			return ctx.send("I couldn't find that crypto currency");
 
-		const assetInfo = await bitvavo.assets({ symbol: asset.symbol });
-		if (!assetInfo)
-			return ctx.send("I couldn't find that crypto currency");
+		//TODO: Keep track per user
+		TopCrypto.findOrCreate({
+			where: {
+				symbol: asset.symbol
+			},
+			defaults: {
+				symbol: asset.symbol,
+				name: asset.name,
+			}
+		}).then(([topCrypto]) => {
+			topCrypto.increment("uses");
+		});
 
 		const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
 

@@ -7,6 +7,7 @@ import path from 'path';
 import { ExpressServer, SlashCreator } from "slash-create";
 import { InteractionPlugin } from "./helpers/InteractionPlugin";
 import { logger } from "./helpers/logger";
+import { connection } from './helpers/database';
 
 
 const plugins: { [name: string]: InteractionPlugin } = {};
@@ -46,9 +47,10 @@ if (fs.existsSync(path.join(__dirname, "interaction"))) {
 			}
 	}
 }
-
-creator
-	.withServer(new ExpressServer())
-	.registerCommandsIn(path.join(__dirname, 'commands'))
-	.syncCommands()
-	.startServer();
+connection.sync().then(() => {
+	creator
+		.withServer(new ExpressServer())
+		.registerCommandsIn(path.join(__dirname, 'commands'))
+		.syncCommands()
+		.startServer();
+});
