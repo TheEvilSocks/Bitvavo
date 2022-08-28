@@ -9,6 +9,7 @@ export class SubscriptionLog extends Model {
     channel: string;
 
     @Index
+    @Column
     symbol: string;
 
     @PrimaryKey
