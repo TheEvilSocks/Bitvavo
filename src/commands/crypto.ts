@@ -94,9 +94,6 @@ export default class SlashCrypto extends SlashCommand {
 		if (!asset)
 			return ctx.send(ErrorResponse("Invalid Crypto", "The crypto currency you specified is not valid. Discord will automatically autocomplete the crypto currency while you type it."));
 
-		if (!ctx.options.range && !["1h", "1d", "7d", "30d", "1y", "all"].includes(ctx.options.range))
-			return ctx.send(ErrorResponse("Invalid range", "Please specify a valid range"));
-
 		//TODO: Keep track per user
 		TopCrypto.findOrCreate({
 			where: {

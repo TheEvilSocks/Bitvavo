@@ -12,7 +12,13 @@ module.exports = {
       script: "index.js",
       cwd: `Bitvavo/dist`,
       cron_restart: "30 3 * * *"
-    }
+    },
+    {
+      name: `Subscriptions`,
+      script: "subscriptions.js",
+      cwd: `Bitvavo/dist/backend`,
+      cron_restart: "43 3 * * *",
+    },
   ],
 };
 
