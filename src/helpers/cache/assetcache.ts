@@ -3,7 +3,7 @@ import { CacheHolder } from "../cacheholder";
 
 export class AssetCache extends CacheHolder<Bitvavo.Asset[]> {
 	constructor() {
-		super(60000);
+		super(60 * 60 * 1000);
 	}
 
 	async update(): Promise<Bitvavo.Asset[]> {

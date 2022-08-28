@@ -24,6 +24,15 @@ module.exports = {
         NODE_ENV: "production"
       }
     },
+    {
+      name: `Pricealerts`,
+      script: "pricealerts.js",
+      cwd: `Bitvavo/dist/backend`,
+      cron_restart: "43 3 * * *",
+      env: {
+        NODE_ENV: "production"
+      }
+    },
   ],
 };
 

@@ -47,7 +47,7 @@ if (fs.existsSync(path.join(__dirname, "interaction"))) {
 			}
 	}
 }
-connection.sync().then(() => {
+connection.sync({ alter: true }).then(() => {
 	creator
 		.withServer(new ExpressServer())
 		.registerCommandsIn(path.join(__dirname, 'commands'))

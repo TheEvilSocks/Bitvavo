@@ -106,6 +106,20 @@ declare namespace Bitvavo {
 		askSize: string;
 		timestamp: number;
 	}
+
+	export interface SubscriptionBase {
+		event: string;
+	}
+
+	export interface SubscriptionTicker extends SubscriptionBase {
+		market: string;
+		bestBid: string;
+		bestBidSize: string;
+		bestAsk: string;
+		bestAskSize: string;
+		lastPrice: string;
+	}
+
 }
 
 declare module "bitvavo" {
@@ -167,7 +181,7 @@ declare module "bitvavo" {
 			//withdrawAssets
 			//depositHistory
 			//withdrawalHistory
-			subscriptionTicker: (market: string, callback: void) => Promise<void>;
+			subscriptionTicker: (market: string, callback: (ticker: Bitvavo.SubscriptionTicker) => void) => Promise<void>;
 			subscriptionTicker24h: (market: string, callback: void) => Promise<void>;
 			//subscriptionAccount
 			subscriptionCandles: (market: string, interval: Bitvavo.CandlesticksInterval, callback: void) => Promise<void>;
