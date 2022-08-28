@@ -26,7 +26,7 @@ export default class SlashSubscribe extends SlashCommand {
 					description: "How often to send updates",
 					required: true,
 					type: CommandOptionType.STRING,
-					choices: shortToLong(["15m", "30m", "1h", "2h", "4h", "6h", "12h", "1d", "instant"])
+					choices: shortToLong(["15m", "30m", "1h", "2h", "4h", "6h", "12h", "1d"/*, "instant"*/])
 					//TODO: implement instant
 				},
 				{
