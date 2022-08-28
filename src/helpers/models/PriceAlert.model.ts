@@ -16,6 +16,6 @@ export class PriceAlert extends Model {
     @Column(DataType.ENUM('above', 'below'))
     type: string;
 
-    @Column
+    @Column(DataType.FLOAT)
     threshold: number;
 }

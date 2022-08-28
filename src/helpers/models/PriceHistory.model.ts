@@ -1,4 +1,4 @@
-import { Column, Index, Model, PrimaryKey, Table } from "sequelize-typescript";
+import { Column, DataType, Index, Model, PrimaryKey, Table } from "sequelize-typescript";
 
 @Table({
     timestamps: false
@@ -14,6 +14,6 @@ export class PriceHistory extends Model {
     @Column
     timestamp: Date;
 
-    @Column
+    @Column(DataType.FLOAT)
     price: number;
 }
