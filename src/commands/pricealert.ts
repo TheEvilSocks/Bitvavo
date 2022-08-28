@@ -100,7 +100,6 @@ export default class SlashPricealert extends SlashCommand {
 			});
 
 			return ctx.send(OKResponse("Price Alerts", "You will receive a DM when the price of this cryptocurrency crosses your threshold."));
-
 		} catch (err) {
 			return ctx.send(ErrorResponse("Error", "An error occurred while subscribing to price alerts. Please try again."));
 		}

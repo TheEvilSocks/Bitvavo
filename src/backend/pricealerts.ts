@@ -23,24 +23,28 @@ let subscribedCryptos: string[] = [];
 
 	// Every 5 minutes, check the database for new price alerts.
 	setInterval(async () => {
-		const priceAlerts = await PriceAlert.findAll({
-			where: {
-				symbol: {
-					[Op.not]: subscribedCryptos
-				}
-			}
-		});
-
-		for (const priceAlert of priceAlerts) {
-			logger.debug(`Subscribing to ${priceAlert.symbol}`);
-			subscribedCryptos.push(priceAlert.symbol);
-			bitvavo.websocket.subscriptionTicker(`${priceAlert.symbol}-EUR`, handleSubscription);
-		}
-
+		subscribe();
 	}, 300000);
+	subscribe();
 
 
 })();
+
+async function subscribe() {
+	const priceAlerts = await PriceAlert.findAll({
+		where: {
+			symbol: {
+				[Op.not]: subscribedCryptos
+			}
+		}
+	});
+
+	for (const priceAlert of priceAlerts) {
+		logger.debug(`Subscribing to ${priceAlert.symbol}`);
+		subscribedCryptos.push(priceAlert.symbol);
+		bitvavo.websocket.subscriptionTicker(`${priceAlert.symbol}-EUR`, handleSubscription);
+	}
+}
 
 
 async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
