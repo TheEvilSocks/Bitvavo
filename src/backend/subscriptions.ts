@@ -11,6 +11,7 @@ import { getCurrencySign } from "../helpers/currency";
 import { connection } from "../helpers/database";
 import { logger } from "../helpers/logger";
 import { Subscriptions } from "../helpers/models/Subscriptions.model";
+import { SubscriptionLog } from '../helpers/models/SubscriptionsLog.model';
 
 
 const client = new Eris(`Bot ${process.env.DISCORD_TOKEN}`, { restMode: true, intents: [] });
@@ -27,8 +28,6 @@ async function sendSubcriptions() {
 		}
 	});
 	logger.debug(`Found ${subscriptions.length} subscriptions`);
-
-
 
 	// Build charts for each subscription
 	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: { image: Buffer, asset: Bitvavo.Asset, ticker: Bitvavo.Ticker } } } } = {};
@@ -130,6 +129,28 @@ async function sendSubcriptions() {
 		}, {
 			file: image,
 			name: `${asset.symbol}-EUR.png`
+		}).then(async msg => {
+			SubscriptionLog.create({
+				message: msg.id,
+				channel: subscription.channel,
+				symbol: subscription.symbol,
+			});
+
+			const previousLogs = await SubscriptionLog.findAll({
+				where: {
+					channel: subscription.channel,
+					symbol: subscription.symbol,
+					message: {
+						[Op.not]: msg.id
+					}
+				}
+			});
+
+			for (const previousLog of previousLogs) {
+				client.deleteMessage(previousLog.channel, previousLog.message);
+				previousLog.destroy();
+			}
+
 		});
 
 		// Update lastPosted timestamp

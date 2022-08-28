@@ -8,6 +8,7 @@ export class Subscriptions extends Model {
     @Column(DataType.BIGINT)
     channel: string;
 
+    @PrimaryKey
     @Column
     symbol: string;
 
