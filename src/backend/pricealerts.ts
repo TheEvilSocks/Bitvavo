@@ -49,6 +49,7 @@ async function subscribe() {
 
 async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 	logger.debug(`Received ticker update for ${ticker.market}`);
+	if (!ticker.lastPrice) return;
 
 	const symbol = ticker.market.split('-')[0];
 	const alerts = await PriceAlert.findAll({
@@ -66,6 +67,9 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 			['timestamp', 'DESC']
 		]
 	});
+
+
+	if (Math.floor(previous.timestamp.getTime() / 1000) >= Math.floor(Date.now() / 1000)) return;
 
 	// Insert new ticker price
 	PriceHistory.create({
