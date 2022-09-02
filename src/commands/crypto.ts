@@ -8,6 +8,7 @@ import { getCurrencySign } from "../helpers/currency";
 import { Chart } from "chart.js";
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
 import { ErrorResponse } from '../helpers/response';
+import { shortToLong } from "../helpers/time";
 
 export default class SlashCrypto extends SlashCommand {
 	constructor(creator: SlashCreator) {
@@ -168,6 +169,9 @@ export default class SlashCrypto extends SlashCommand {
 		// Combine canvas content and canvas scale
 		const attachment = canvas.toBuffer();
 
+		const difference = chartData[chartData.length - 1][1] - chartData[0][1];
+		const differencePercentage = (difference / chartData[0][1]) * 100;
+
 		return ctx.send({
 			file: {
 				file: attachment,
@@ -175,7 +179,8 @@ export default class SlashCrypto extends SlashCommand {
 			},
 			embeds: [
 				{
-					title: asset.name,
+					title: `${asset.name} (${shortToLong(ctx.options.range || "1h")[0].name})`,
+					color: difference >= 0 ? 0x00ff00 : 0xff0000,
 					description: `${asset.symbol} - ${asset.name}`,
 					thumbnail: {
 						url: `https://cryptologos.cc/logos/${asset.name.toLowerCase()}-${asset.symbol.toLowerCase()}-logo.png`
@@ -187,6 +192,11 @@ export default class SlashCrypto extends SlashCommand {
 						{
 							name: "Price",
 							value: `${getCurrencySign("EUR")}${ticker.price}`,
+						},
+						{
+							name: 'Difference',
+							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(difference.toString().length >= 2 ? difference.toString().length : 2)} (${(differencePercentage).toFixed(2)}%)`,
+							inline: true
 						}
 					]
 				}

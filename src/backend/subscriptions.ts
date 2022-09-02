@@ -12,6 +12,7 @@ import { connection } from "../helpers/database";
 import { logger } from "../helpers/logger";
 import { Subscriptions } from "../helpers/models/Subscriptions.model";
 import { SubscriptionLog } from '../helpers/models/SubscriptionsLog.model';
+import { shortToLong } from '../helpers/time';
 
 
 const client = new Eris(`Bot ${process.env.DISCORD_TOKEN}`, { restMode: true, intents: [] });
@@ -30,7 +31,7 @@ async function sendSubcriptions() {
 	logger.debug(`Found ${subscriptions.length} subscriptions`);
 
 	// Build charts for each subscription
-	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: { image: Buffer, asset: Bitvavo.Asset, ticker: Bitvavo.Ticker } } } } = {};
+	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: { image: Buffer, asset: Bitvavo.Asset, ticker: Bitvavo.Ticker, difference: number, differencePercentage: number, range:string } } } } = {};
 	for (const subscription of subscriptions) {
 		if (charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
 
@@ -100,17 +101,22 @@ async function sendSubcriptions() {
 		});
 		myChart.draw();
 
-		charts[subscription.symbol][subscription.interval][subscription.chart] = { image: canvas.toBuffer(), asset, ticker };
+		const difference = chartData[chartData.length - 1][1] - chartData[0][1];
+		const differencePercentage = (difference / chartData[0][1]) * 100;
+
+		charts[subscription.symbol][subscription.interval][subscription.chart] = { image: canvas.toBuffer(), asset, ticker, difference, differencePercentage, range: subscription.chart };
 	}
 
 	// Post charts to Discord channels
 	for (const subscription of subscriptions) {
 		if (!charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
-		const { image, asset, ticker } = charts[subscription.symbol][subscription.interval][subscription.chart];
+		const { image, asset, ticker, difference, differencePercentage, range } = charts[subscription.symbol][subscription.interval][subscription.chart];
+
 		client.createMessage(subscription.channel, {
 			embeds: [
 				{
-					title: asset.name,
+					title: `${asset.name} (${shortToLong(range || "1h")[0].name})`,
+					color: difference >= 0 ? 0x00ff00 : 0xff0000,
 					description: `${asset.symbol} - ${asset.name}`,
 					thumbnail: {
 						url: `https://cryptologos.cc/logos/${asset.name.toLowerCase()}-${asset.symbol.toLowerCase()}-logo.png`
@@ -122,6 +128,11 @@ async function sendSubcriptions() {
 						{
 							name: "Price",
 							value: `${getCurrencySign("EUR")}${ticker.price}`,
+						},
+						{
+							name: 'Difference',
+							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(difference.toString().length >= 2 ? difference.toString().length : 2)} (${(differencePercentage).toFixed(2)}%)`,
+							inline: true
 						}
 					]
 				}

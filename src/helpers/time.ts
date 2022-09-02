@@ -1,4 +1,6 @@
-export function shortToLong(time: string[]): { name: string, value: string }[] {
+export function shortToLong(time: string[] | string): { name: string, value: string }[] {
+	if (typeof time === 'string') time = [time];
+
 	return time.map(a => {
 		let name = a;
 
