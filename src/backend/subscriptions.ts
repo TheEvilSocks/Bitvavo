@@ -131,7 +131,7 @@ async function sendSubcriptions() {
 						},
 						{
 							name: 'Difference',
-							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(difference.toString().length >= 2 ? difference.toString().length : 2)} (${(differencePercentage).toFixed(2)}%)`,
+							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(asset.decimals)} (${(differencePercentage).toFixed(2)}%)`,
 							inline: true
 						}
 					]
