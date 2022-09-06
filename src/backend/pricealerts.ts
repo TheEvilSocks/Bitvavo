@@ -69,7 +69,7 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 	});
 
 
-	if (Math.floor(previous.timestamp.getTime() / 1000) >= Math.floor(Date.now() / 1000)) return;
+	if (previous && Math.floor(previous.timestamp.getTime() / 1000) >= Math.floor(Date.now() / 1000)) return;
 
 	// Insert new ticker price
 	PriceHistory.create({
