@@ -166,7 +166,6 @@ export default class SlashCrypto extends SlashCommand {
 		});
 		myChart.draw();
 
-		// Combine canvas content and canvas scale
 		const attachment = canvas.toBuffer();
 
 		const difference = chartData[chartData.length - 1][1] - chartData[0][1];
