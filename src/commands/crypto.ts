@@ -1,14 +1,10 @@
-import { createCanvas } from "canvas";
 import 'chartjs-adapter-moment';
 import { AutocompleteContext, CommandContext, CommandOptionType, Message, SlashCommand, SlashCreator } from "slash-create";
 import { compareTwoStrings } from "string-similarity";
-import { Assets, bitvavo, chart } from "../helpers/bitvavo";
-import { getCurrencySign } from "../helpers/currency";
+import { Assets, getGraphMessage } from "../helpers/bitvavo";
 
-import { Chart } from "chart.js";
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
 import { ErrorResponse } from '../helpers/response';
-import { shortToLong } from "../helpers/time";
 
 export default class SlashCrypto extends SlashCommand {
 	constructor(creator: SlashCreator) {
@@ -108,98 +104,6 @@ export default class SlashCrypto extends SlashCommand {
 			topCrypto.increment("uses");
 		});
 
-		const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
-
-		const canvas = createCanvas(750, 350);
-		const chartData = await chart(asset.symbol, ctx.options.range || "1h");
-		const myChart = new Chart(canvas.getContext('2d'), {
-			type: 'line',
-			options: {
-				elements: {
-					point: {
-						radius: 0
-					}
-				},
-				plugins: {
-					legend: {
-						display: false
-					},
-					tooltip: {
-						enabled: false
-					}
-				},
-				scales: {
-					x: {
-						type: 'time',
-						time: {
-							displayFormats: {
-								millisecond: 'HH:mm:ss.SSS',
-								second: 'HH:mm:ss',
-								minute: 'HH:mm',
-								hour: 'HH'
-							}
-						},
-						ticks: {
-							autoSkip: true,
-							maxTicksLimit: 10,
-							color: "#00a8b3"
-						}
-					},
-					y: {
-						ticks: {
-							color: "#ff9c33"
-						}
-					}
-				}
-			},
-			data: {
-				labels: chartData.map(entry => (new Date(entry[0]))),
-				datasets: [{
-					label: asset.name,
-					data: chartData.map(entry => entry[1]),
-					fill: false,
-					animation: false,
-					borderColor: '#3396FF',
-					backgroundColor: '#3396FF',
-				}]
-			}
-		});
-		myChart.draw();
-
-		const attachment = canvas.toBuffer();
-
-		const difference = chartData[chartData.length - 1][1] - chartData[0][1];
-		const differencePercentage = (difference / chartData[0][1]) * 100;
-
-		return ctx.send({
-			file: {
-				file: attachment,
-				name: `${asset.symbol}-EUR.png`
-			},
-			embeds: [
-				{
-					title: `${asset.name} (${shortToLong(ctx.options.range || "1h")[0].name})`,
-					color: difference >= 0 ? 0x00ff00 : 0xff0000,
-					description: `${asset.symbol} - ${asset.name}`,
-					thumbnail: {
-						url: `https://cryptologos.cc/logos/${asset.name.toLowerCase()}-${asset.symbol.toLowerCase()}-logo.png`
-					},
-					image: {
-						url: `attachment://${asset.symbol}-EUR.png`
-					},
-					fields: [
-						{
-							name: "Price",
-							value: `${getCurrencySign("EUR")}${ticker.price}`,
-						},
-						{
-							name: 'Difference',
-							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(asset.decimals)} (${(differencePercentage).toFixed(2)}%)`,
-							inline: true
-						}
-					]
-				}
-			]
-		});
+		return ctx.send(await getGraphMessage(asset, ctx.options.range));
 	}
 }

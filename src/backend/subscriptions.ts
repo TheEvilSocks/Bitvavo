@@ -2,17 +2,14 @@ import 'chartjs-adapter-moment';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '../.env' });
 
-import { createCanvas } from "canvas";
-import { Chart } from "chart.js";
 import { Client as Eris } from "eris";
 import { Op } from "sequelize";
-import { Assets, bitvavo, chart, ChartInterval } from "../helpers/bitvavo";
-import { getCurrencySign } from "../helpers/currency";
+import { MessageOptions } from 'slash-create';
+import { Assets, ChartInterval, getGraphMessage } from "../helpers/bitvavo";
 import { connection } from "../helpers/database";
 import { logger } from "../helpers/logger";
 import { Subscriptions } from "../helpers/models/Subscriptions.model";
 import { SubscriptionLog } from '../helpers/models/SubscriptionsLog.model';
-import { shortToLong } from '../helpers/time';
 
 
 const client = new Eris(`Bot ${process.env.DISCORD_TOKEN}`, { restMode: true, intents: [] });
@@ -30,9 +27,10 @@ async function sendSubcriptions() {
 	});
 	logger.debug(`Found ${subscriptions.length} subscriptions`);
 
-	// Build charts for each subscription
-	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: { image: Buffer, asset: Bitvavo.Asset, ticker: Bitvavo.Ticker, difference: number, differencePercentage: number, range:string } } } } = {};
+	// For each subscription, generate the chart.
+	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: MessageOptions } } } = {};
 	for (const subscription of subscriptions) {
+		// If we've already generated a chart for this subscription type, skip it. This way we avoid generating the same chart multiple times.
 		if (charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
 
 		logger.debug(`Building chart for ${subscription.channel} ${subscription.symbol} ${subscription.interval} ${subscription.chart}`);
@@ -43,104 +41,17 @@ async function sendSubcriptions() {
 
 		const assets = await Assets.get();
 		const asset = assets.find(a => a.symbol.toLowerCase() === subscription.symbol.toLowerCase());
-		const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
 
-		const canvas = createCanvas(750, 350);
-		const chartData = await chart(asset.symbol, subscription.chart as ChartInterval);
-		const myChart = new Chart(canvas.getContext('2d'), {
-			type: 'line',
-			options: {
-				elements: {
-					point: {
-						radius: 0
-					}
-				},
-				plugins: {
-					legend: {
-						display: false
-					},
-					tooltip: {
-						enabled: false
-					}
-				},
-				scales: {
-					x: {
-						type: 'time',
-						time: {
-							displayFormats: {
-								millisecond: 'HH:mm:ss.SSS',
-								second: 'HH:mm:ss',
-								minute: 'HH:mm',
-								hour: 'HH'
-							}
-						},
-						ticks: {
-							autoSkip: true,
-							maxTicksLimit: 10,
-							color: "#00a8b3"
-						}
-					},
-					y: {
-						ticks: {
-							color: "#ff9c33"
-						}
-					}
-				}
-			},
-			data: {
-				labels: chartData.map(entry => (new Date(entry[0]))),
-				datasets: [{
-					label: asset.name,
-					data: chartData.map(entry => entry[1]),
-					fill: false,
-					animation: false,
-					borderColor: '#3396FF',
-					backgroundColor: '#3396FF',
-				}]
-			}
-		});
-		myChart.draw();
 
-		const difference = chartData[chartData.length - 1][1] - chartData[0][1];
-		const differencePercentage = (difference / chartData[0][1]) * 100;
-
-		charts[subscription.symbol][subscription.interval][subscription.chart] = { image: canvas.toBuffer(), asset, ticker, difference, differencePercentage, range: subscription.chart };
+		charts[subscription.symbol][subscription.interval][subscription.chart] = await getGraphMessage(asset, subscription.chart as ChartInterval);
 	}
 
-	// Post charts to Discord channels
+	// After generating all the charts, send them to their respective channels.
 	for (const subscription of subscriptions) {
 		if (!charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
-		const { image, asset, ticker, difference, differencePercentage, range } = charts[subscription.symbol][subscription.interval][subscription.chart];
+		const msg = charts[subscription.symbol][subscription.interval][subscription.chart];
 
-		client.createMessage(subscription.channel, {
-			embeds: [
-				{
-					title: `${asset.name} (${shortToLong(range || "1h")[0].name})`,
-					color: difference >= 0 ? 0x00ff00 : 0xff0000,
-					description: `${asset.symbol} - ${asset.name}`,
-					thumbnail: {
-						url: `https://cryptologos.cc/logos/${asset.name.toLowerCase()}-${asset.symbol.toLowerCase()}-logo.png`
-					},
-					image: {
-						url: `attachment://${asset.symbol}-EUR.png`
-					},
-					fields: [
-						{
-							name: "Price",
-							value: `${getCurrencySign("EUR")}${ticker.price}`,
-						},
-						{
-							name: 'Difference',
-							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(asset.decimals)} (${(differencePercentage).toFixed(2)}%)`,
-							inline: true
-						}
-					]
-				}
-			]
-		}, {
-			file: image,
-			name: `${asset.symbol}-EUR.png`
-		}).then(async msg => {
+		client.createMessage(subscription.channel, { embeds: msg.embeds }, msg.file).then(async msg => {
 			SubscriptionLog.create({
 				message: msg.id,
 				channel: subscription.channel,
