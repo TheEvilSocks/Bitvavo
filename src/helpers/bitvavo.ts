@@ -6,6 +6,7 @@ import { MessageOptions } from 'slash-create';
 import { AssetCache } from './cache/assetcache';
 import { MarketCache } from './cache/marketcache';
 import { getCurrencySign } from './currency';
+import { decimals, round } from './math';
 import { shortToLong } from './time';
 
 export const bitvavo = Bitvavo().options({
@@ -87,6 +88,7 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 	const difference = chartData[chartData.length - 1][1] - chartData[0][1];
 	const differencePercentage = (difference / chartData[0][1]) * 100;
 
+	const curSign = getCurrencySign("EUR");
 	return {
 		file: {
 			file: attachment,
@@ -105,13 +107,23 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 				},
 				fields: [
 					{
-						name: "Price",
-						value: `${getCurrencySign("EUR")}${ticker.price}`,
+						name: "Current",
+						value: `${curSign} ${ticker.price}`,
+						inline: true
+					},
+					{
+						name: "High",
+						value: `${curSign} ${decimals(Math.max(...chartData.map(entry => entry[1])), 2, asset.decimals)}`,
+						inline: true
+					},
+					{
+						name: "Low",
+						value: `${curSign} ${decimals(Math.min(...chartData.map(entry => entry[1])), 2, asset.decimals)}`,
+						inline: true
 					},
 					{
 						name: 'Difference',
-						value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${difference.toFixed(asset.decimals)} (${(differencePercentage).toFixed(2)}%)`,
-						inline: true
+						value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${curSign} ${decimals(difference, 2, asset.decimals)} (${decimals(differencePercentage, 2, 2)}%)`
 					}
 				]
 			}
