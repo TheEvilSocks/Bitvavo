@@ -108,7 +108,7 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 				fields: [
 					{
 						name: "Current",
-						value: `${curSign} ${ticker.price}`,
+						value: `${curSign} ${decimals(parseFloat(ticker.price), 2, asset.decimals)}`,
 						inline: true
 					},
 					{

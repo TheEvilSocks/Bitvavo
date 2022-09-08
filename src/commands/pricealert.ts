@@ -25,7 +25,7 @@ export default class SlashPricealert extends SlashCommand {
 					description: "The type of alert to receive.",
 					required: true,
 					type: CommandOptionType.STRING,
-					choices: [{ name: "above", value: "above" }, { name: "below", value: "below" }]
+					choices: [{ name: "above", value: "above" }, { name: "below", value: "below" }, { name: "at", value: "at" }]
 				},
 				{
 					name: "threshold",

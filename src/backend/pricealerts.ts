@@ -8,6 +8,7 @@ import { Assets, bitvavo } from "../helpers/bitvavo";
 import { getCurrencySign } from "../helpers/currency";
 import { connection } from "../helpers/database";
 import { logger } from "../helpers/logger";
+import { decimals } from '../helpers/math';
 import { PriceAlert } from '../helpers/models/PriceAlert.model';
 import { PriceHistory } from '../helpers/models/PriceHistory.model';
 
@@ -88,40 +89,41 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 	const differencePercentage = (difference / previous.price) * 100;
 
 	for (const alert of alerts) {
-		const shouldAlert = alert.type === 'above' ? parseFloat(ticker.lastPrice) >= alert.threshold : parseFloat(ticker.lastPrice) <= alert.threshold;
+		const wentAbove = alert.type === 'above' && parseFloat(ticker.lastPrice) >= alert.threshold && previous.price < alert.threshold;
+		const wentBelow = alert.type === 'below' && parseFloat(ticker.lastPrice) <= alert.threshold && previous.price > alert.threshold;
 
-		// Don't alert if we haven't crossed the threshold yet
-		if (alert.type === 'above' && previous.price >= alert.threshold) continue;
-		if (alert.type === 'below' && previous.price <= alert.threshold) continue;
+		const shouldAlert = alert.type === 'above' ? wentAbove : (alert.type === 'below' ? wentBelow : wentAbove || wentBelow);
 
-		if (shouldAlert) {
-			client.getDMChannel(alert.user).then(async (channel) => {
-				await channel.createMessage({
-					embed: {
-						title: `${crypto.name} price alert`,
-						description: `The price of ${crypto.name} has gone **${alert.type}** your threshold of **${getCurrencySign('EUR')}${alert.threshold}**.`,
-						color: alert.type === 'above' ? 0x00ff00 : 0xff0000,
-						fields: [
-							{
-								name: 'Current price',
-								value: `${getCurrencySign('EUR')}${ticker.lastPrice}`,
-								inline: true
-							},
-							{
-								name: 'Previous price',
-								value: `${getCurrencySign('EUR')}${previous.price}`,
-								inline: true
-							},
-							{
-								name: 'Difference',
-								value: `${alert.type === 'above' ? '\u25b2' : '\u25bc'} ${difference.toFixed(crypto.decimals)} (${(differencePercentage).toFixed(2)}%)`,
-								inline: true
-							}
-						]
-					}
-				});
+		if (!shouldAlert) continue;
+
+		const curSign = getCurrencySign('EUR');
+
+		client.getDMChannel(alert.user).then(async (channel) => {
+			await channel.createMessage({
+				embed: {
+					title: `${crypto.name} price alert`,
+					description: `The price of **${crypto.name}** is **${alert.type}** your threshold of **${curSign} ${alert.threshold}**.`,
+					color: alert.type === 'above' ? 0x00ff00 : 0xff0000,
+					fields: [
+						{
+							name: 'Current price',
+							value: `${curSign} ${decimals(parseFloat(ticker.lastPrice), 2, crypto.decimals)}`,
+							inline: true
+						},
+						{
+							name: 'Previous price',
+							value: `${curSign} ${decimals(previous.price, 2, crypto.decimals)}`,
+							inline: true
+						},
+						{
+							name: 'Difference',
+							value: `${difference >= 0 ? '\u25b2' : '\u25bc'} ${curSign} ${decimals(difference, 2, crypto.decimals)} (${decimals(differencePercentage, 2, 2)}%)`,
+							inline: true
+						}
+					]
+				}
 			});
-		}
+		});
 	}
 
 
