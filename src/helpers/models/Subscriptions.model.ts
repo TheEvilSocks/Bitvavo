@@ -12,6 +12,7 @@ export class Subscriptions extends Model {
     @Column
     symbol: string;
 
+    @PrimaryKey
     @Column
     chart: string;
 
