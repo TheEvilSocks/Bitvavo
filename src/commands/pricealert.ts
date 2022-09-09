@@ -2,6 +2,8 @@ import 'chartjs-adapter-moment';
 import { AutocompleteContext, CommandContext, CommandOptionType, Message, SlashCommand, SlashCreator } from "slash-create";
 import { compareTwoStrings } from "string-similarity";
 import { Assets } from "../helpers/bitvavo";
+import { getCurrencySign } from '../helpers/currency';
+import { decimals } from '../helpers/math';
 import { PriceAlert } from '../helpers/models/PriceAlert.model';
 
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
@@ -83,7 +85,8 @@ export default class SlashPricealert extends SlashCommand {
 			where: {
 				user: ctx.user.id,
 				symbol: asset.symbol,
-				type: ctx.options.type
+				type: ctx.options.type,
+				threshold: ctx.options.threshold
 			}
 		});
 
@@ -99,7 +102,9 @@ export default class SlashPricealert extends SlashCommand {
 				threshold: ctx.options.threshold
 			});
 
-			return ctx.send(OKResponse("Price Alerts", "You will receive a DM when the price of this cryptocurrency crosses your threshold."));
+			const msg = ctx.options.type === 'above' ? `goes above` : (ctx.options.type === 'below' ? `goes below` : `reaches`);
+
+			return ctx.send(OKResponse("Price Alerts", `You will receive a DM when the price of **${asset.name}** ${msg} ${getCurrencySign('EUR')} ${decimals(ctx.options.threshold, 2, asset.decimals)}.`));
 		} catch (err) {
 			return ctx.send(ErrorResponse("Error", "An error occurred while subscribing to price alerts. Please try again."));
 		}
