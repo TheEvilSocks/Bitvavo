@@ -100,7 +100,7 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 				color: difference >= 0 ? 0x00ff00 : 0xff0000,
 				description: `${asset.symbol} - ${asset.name}`,
 				thumbnail: {
-					url: `https://cryptologos.cc/logos/${asset.name.toLowerCase()}-${asset.symbol.toLowerCase()}-logo.png`
+					url: `https://cryptologos.cc/logos/${encodeURIComponent(asset.name.toLowerCase())}-${encodeURIComponent(asset.symbol.toLowerCase())}-logo.png`
 				},
 				image: {
 					url: `attachment://${asset.symbol}-EUR.png`
