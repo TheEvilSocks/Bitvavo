@@ -55,7 +55,6 @@ export default class SlashCrypto extends SlashCommand {
 	}
 
 	async autocomplete(ctx: AutocompleteContext): Promise<any> {
-
 		if (!ctx.options.crypto || !ctx.options.crypto.length) {
 			const top = await TopCrypto.findAll({
 				order: [
@@ -74,13 +73,13 @@ export default class SlashCrypto extends SlashCommand {
 				score = 1;
 			else if (a.symbol.toLowerCase().includes(ctx.options.crypto.toLowerCase()))
 				score = 1;
-			else
+			else if (ctx.options.crypto.length > 3)
 				score = Math.max(compareTwoStrings(a.name.toLowerCase(), ctx.options.crypto.toLowerCase()), compareTwoStrings(a.symbol.toLowerCase(), ctx.options.crypto.toLowerCase()));
 
 			return [a.name, a.symbol, score];
 		});
 
-		return ctx.sendResults(mapped.filter(a => a[2] > 0.5).sort((a, b) => b[2] - a[2] || a[0].length - b[0].length).map(a => ({ name: a[0], value: a[1] })));
+		return ctx.sendResults(mapped.filter(a => a[2] > 0.5).sort((a, b) => b[2] - a[2] || a[0].length - b[0].length).slice(0, 20).map(a => ({ name: a[0], value: a[1] })));
 	}
 
 	async run(ctx: CommandContext): Promise<boolean | Message> {
