@@ -4,6 +4,7 @@ dotenv.config({ path: '../.env' });
 
 import { Client as Eris } from "eris";
 import { Op } from "sequelize";
+import { ComponentType } from 'slash-create';
 import { Assets, bitvavo } from "../helpers/bitvavo";
 import { getCurrencySign } from "../helpers/currency";
 import { connection } from "../helpers/database";
@@ -22,10 +23,10 @@ let subscribedCryptos: string[] = [];
 
 	// Read all price alerts from the database, and subscribe to their websocket channels.
 
-	// Every 5 minutes, check the database for new price alerts.
-	setInterval(async () => {
+	// Every 30 seconds, check the database for new price alerts.
+	setInterval(() => {
 		subscribe();
-	}, 300000);
+	}, 30000);
 	subscribe();
 
 
@@ -121,7 +122,21 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 							inline: true
 						}
 					]
-				}
+				},
+				components: [
+					{
+						type: 1,
+						components: [
+							{
+								type: ComponentType.BUTTON,
+								label: 'Delete alert',
+								style: 4,
+								custom_id: `alert_delete_${alert.symbol}-${alert.type}-${alert.threshold}`
+							}
+						]
+					}
+				]
+
 			});
 		});
 	}
