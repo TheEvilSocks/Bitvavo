@@ -17,6 +17,6 @@ export class PriceAlert extends Model {
     type: string;
 
     @PrimaryKey
-    @Column(DataType.FLOAT)
+    @Column(DataType.DECIMAL(16, 8))
     threshold: number;
 }

@@ -1,8 +1,8 @@
 import { ComponentContext } from "slash-create";
-import { getCurrencySign } from "../../helpers/currency";
-import { InteractionPlugin } from "../../helpers/InteractionPlugin";
-import { PriceAlert } from "../../helpers/models/PriceAlert.model";
-import { ErrorResponse, OKResponse } from "../../helpers/response";
+import { getCurrencySign } from "../helpers/currency";
+import { InteractionPlugin } from "../helpers/InteractionPlugin";
+import { PriceAlert } from "../helpers/models/PriceAlert.model";
+import { ErrorResponse, OKResponse } from "../helpers/response";
 
 class DeleteAlertButton extends InteractionPlugin {
 
@@ -20,11 +20,19 @@ class DeleteAlertButton extends InteractionPlugin {
 		if (symbol === undefined || type === undefined || threshold === undefined) return;
 		ctx.defer(true);
 
+		console.log(
+			{
+				symbol,
+				type,
+				threshold,
+				user: ctx.user.id
+			})
+
 		const alert = await PriceAlert.destroy({
 			where: {
 				symbol,
 				type,
-				threshold,
+				threshold: Number(threshold),
 				user: ctx.user.id
 			}
 		});
