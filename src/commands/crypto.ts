@@ -1,11 +1,18 @@
 import 'chartjs-adapter-moment';
 import { AutocompleteContext, CommandContext, CommandOptionType, Message, SlashCommand, SlashCreator } from "slash-create";
 import { compareTwoStrings } from "string-similarity";
-import { Assets, getGraphMessage } from "../helpers/bitvavo";
+import { Assets, ChartIntervalBase, getGraphMessage } from "../helpers/bitvavo";
 
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
 import { ErrorResponse } from '../helpers/response';
 
+// Key is unsupported on api so request value instead.
+const ZOOM_OUT: { [name: string]: ChartIntervalBase } = {
+	"14d": "30d",
+	"2mth": "1y",
+	"3mth": "1y",
+	"6mth": "1y"
+}
 export default class SlashCrypto extends SlashCommand {
 	constructor(creator: SlashCreator) {
 		super(creator, {
@@ -24,7 +31,7 @@ export default class SlashCrypto extends SlashCommand {
 					description: "The time range of the chart",
 					required: false,
 					type: CommandOptionType.STRING,
-					choices: ["1h", "1d", "7d", "30d", "1y", "all"].map(a => {
+					choices: ["1h", "1d", "7d", "14d", "30d", "2mth", "3mth", "6mth", "1y", "all"].map(a => {
 						let name = a;
 						if (a.endsWith("m")) {
 							let num = parseInt(a.substring(0, a.length - 1));
@@ -37,6 +44,10 @@ export default class SlashCrypto extends SlashCommand {
 						else if (a.endsWith("d")) {
 							let num = parseInt(a.substring(0, a.length - 1));
 							name = `${num} day${num > 1 ? "s" : ""}`;
+						}
+						else if (a.endsWith("mth")) {
+							let num = parseInt(a.substring(0, a.length - 3));
+							name = `${num} month${num > 1 ? "s" : ""}`;
 						}
 						else if (a.endsWith("y")) {
 							let num = parseInt(a.substring(0, a.length - 1));
@@ -103,6 +114,6 @@ export default class SlashCrypto extends SlashCommand {
 			topCrypto.increment("uses");
 		});
 
-		return ctx.send(await getGraphMessage(asset, ctx.options.range));
+		return ctx.send(await getGraphMessage(asset, ctx.options.range, ZOOM_OUT[ctx.options.range] || ctx.options.range));
 	}
 }

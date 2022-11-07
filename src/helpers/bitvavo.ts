@@ -6,8 +6,8 @@ import { MessageOptions } from 'slash-create';
 import { AssetCache } from './cache/assetcache';
 import { MarketCache } from './cache/marketcache';
 import { getCurrencySign } from './currency';
-import { decimals, round } from './math';
-import { shortToLong } from './time';
+import { decimals } from './math';
+import { parseTimestring, shortToLong } from './time';
 
 export const bitvavo = Bitvavo().options({
 	apikey: process.env.BITVAVO_KEY,
@@ -17,18 +17,28 @@ export const bitvavo = Bitvavo().options({
 export const Markets = new MarketCache();
 export const Assets = new AssetCache();
 
-export type ChartInterval = "1h" | "1d" | "7d" | "30d" | "1y" | "all";
+export type ChartIntervalBase = "1h" | "1d" | "7d" | "30d" | "1y" | "all";
+export type ChartInterval = ChartIntervalBase | "14d" | "2mth" | "3mth" | "6mth";
+
 export type ChartEntry = [timestamp: number, price: number];
 export async function chart(asset: string, range: ChartInterval): Promise<ChartEntry[]> {
 	const res = await axios.get(`https://data.bitvavo.com/v1/chart?range=${range}&asset=${asset}`);
 	return res.data;
 }
 
-export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval = "1h"): Promise<MessageOptions> {
+export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval = "1h", zoomFrom?: ChartIntervalBase): Promise<MessageOptions> {
 	const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
 
 	const canvas = createCanvas(750, 350);
-	const chartData = await chart(asset.symbol, range);
+	let chartData = await chart(asset.symbol, zoomFrom || range);
+
+	// If zoomFrom is set, filter the chartData to that range
+	if (zoomFrom) {
+		const now = Date.now();
+		const chartRange = parseTimestring(range) * 1000;
+		chartData = chartData.filter(a => a[0] >= now - chartRange);
+	}
+
 	const myChart = new Chart(canvas.getContext('2d'), {
 		type: 'line',
 		options: {
