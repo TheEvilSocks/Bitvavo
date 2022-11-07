@@ -5,6 +5,7 @@ import { Assets, ChartIntervalBase, getGraphMessage } from "../helpers/bitvavo";
 
 import { TopCrypto } from '../helpers/models/TopCrypto.model';
 import { ErrorResponse } from '../helpers/response';
+import { shortToLong } from '../helpers/time';
 
 // Key is unsupported on api so request value instead.
 const ZOOM_OUT: { [name: string]: ChartIntervalBase } = {
@@ -31,31 +32,7 @@ export default class SlashCrypto extends SlashCommand {
 					description: "The time range of the chart",
 					required: false,
 					type: CommandOptionType.STRING,
-					choices: ["1h", "1d", "7d", "14d", "30d", "2mth", "3mth", "6mth", "1y", "all"].map(a => {
-						let name = a;
-						if (a.endsWith("m")) {
-							let num = parseInt(a.substring(0, a.length - 1));
-							name = `${num} minute${num > 1 ? "s" : ""}`;
-						}
-						else if (a.endsWith("h")) {
-							let num = parseInt(a.substring(0, a.length - 1));
-							name = `${num} hour${num > 1 ? "s" : ""}`;
-						}
-						else if (a.endsWith("d")) {
-							let num = parseInt(a.substring(0, a.length - 1));
-							name = `${num} day${num > 1 ? "s" : ""}`;
-						}
-						else if (a.endsWith("mth")) {
-							let num = parseInt(a.substring(0, a.length - 3));
-							name = `${num} month${num > 1 ? "s" : ""}`;
-						}
-						else if (a.endsWith("y")) {
-							let num = parseInt(a.substring(0, a.length - 1));
-							name = `${num} year${num > 1 ? "s" : ""}`;
-						}
-
-						return { name, value: a };
-					})
+					choices: shortToLong(["1h", "1d", "7d", "14d", "30d", "2mth", "3mth", "6mth", "1y", "all"])
 				}
 			],
 			throttling: {
@@ -114,6 +91,6 @@ export default class SlashCrypto extends SlashCommand {
 			topCrypto.increment("uses");
 		});
 
-		return ctx.send(await getGraphMessage(asset, ctx.options.range, ZOOM_OUT[ctx.options.range] || ctx.options.range));
+		return ctx.send(await getGraphMessage(asset, ctx.options.range, ZOOM_OUT[ctx.options.range]));
 	}
 }

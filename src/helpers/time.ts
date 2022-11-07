@@ -4,21 +4,25 @@ export function shortToLong(time: string[] | string): { name: string, value: str
 	return time.map(a => {
 		let name = a;
 
-		if (a.endsWith("m")) {
-			let num = parseInt(a.substring(0, a.length - 1));
-			name = `${num} minute${num > 1 ? "s" : ""}`;
+		if (a.endsWith("y")) {
+			let num = parseInt(a.slice(0, -1));
+			name = `${num} year${num > 1 ? "s" : ""}`;
 		}
-		else if (a.endsWith("h")) {
-			let num = parseInt(a.substring(0, a.length - 1));
-			name = `${num} hour${num > 1 ? "s" : ""}`;
+		else if (a.endsWith("mth")) {
+			let num = parseInt(a.slice(0, -3));
+			name = `${num} month${num > 1 ? "s" : ""}`;
 		}
 		else if (a.endsWith("d")) {
-			let num = parseInt(a.substring(0, a.length - 1));
+			let num = parseInt(a.slice(0, -1));
 			name = `${num} day${num > 1 ? "s" : ""}`;
 		}
-		else if (a.endsWith("y")) {
-			let num = parseInt(a.substring(0, a.length - 1));
-			name = `${num} year${num > 1 ? "s" : ""}`;
+		else if (a.endsWith("h")) {
+			let num = parseInt(a.slice(0, -1));
+			name = `${num} hour${num > 1 ? "s" : ""}`;
+		}
+		else if (a.endsWith("m")) {
+			let num = parseInt(a.slice(0, -1));
+			name = `${num} minute${num > 1 ? "s" : ""}`;
 		}
 
 		return { name, value: a };
@@ -33,7 +37,9 @@ const unitValues: { [key: string]: number } = {
 	minute: 60,
 	hour: 3600,
 	day: 86400,
-	week: 604800
+	week: 604800,
+	month: 2592000,
+	year: 31536000
 };
 
 const UNIT_MAP: { [key: string]: string[] } = {
@@ -52,7 +58,6 @@ const UNIT_MAP: { [key: string]: string[] } = {
  */
 
 export function parseTimestring(string: string, date = (new Date()), allowed_units: TimeUnit[] = ['millisecond', 'second', 'minute', 'hour', 'day', 'week', 'month', 'year']) {
-
 	let totalSeconds = 0;
 	const groups = string
 		.toLowerCase()
@@ -74,9 +79,8 @@ export function parseTimestring(string: string, date = (new Date()), allowed_uni
 			unit = _temp[0];
 
 		if (value !== undefined && unit !== undefined && allowed_units.includes(getUnitKey(unit)))
-			totalSeconds += getSeconds(value, unit, date);
+			totalSeconds += value * unitValues[getUnitKey(unit)];
 	});
-
 	return totalSeconds;
 }
 
@@ -86,40 +90,9 @@ export function parseTimestring(string: string, date = (new Date()), allowed_uni
 
 function getUnitKey(unit: string): TimeUnit {
 	for (const key of Object.keys(UNIT_MAP))
-		if (UNIT_MAP[key].includes(unit))
+		if (UNIT_MAP[key].includes(unit)) {
 			return key as TimeUnit;
+		}
 
 	throw new Error(`The unit [${unit}] is not supported by timestring`);
-}
-
-/**
- *  Get the number of seconds for a value, based on the unit
- */
-
-export function getSeconds(value: number, unit: string, date: Date) {
-
-	switch (getUnitKey(unit)) {
-		case 'year':
-			return value * daysInYear(date.getUTCFullYear()) * unitValues.d;
-		case 'month':
-			let ret = 0;
-			for (let i = 0; i < value; i++)
-				ret += unitValues.d * daysInMonth(date.getUTCMonth() + i, date.getUTCFullYear());
-			return ret;
-
-		default:
-			return value * unitValues[getUnitKey(unit)];
-	}
-}
-
-
-export function daysInMonth(month: number, year: number) {
-	return new Date(year, month + 1, 0).getDate();
-}
-
-export function daysInYear(year: number) {
-	let ret = 0;
-	for (let i = 0; i < 12; i++)
-		ret += daysInMonth(i, year);
-	return ret;
 }
