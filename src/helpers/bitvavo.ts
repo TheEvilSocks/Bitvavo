@@ -18,7 +18,7 @@ export const Markets = new MarketCache();
 export const Assets = new AssetCache();
 
 export type ChartIntervalBase = "1h" | "1d" | "7d" | "30d" | "1y" | "all";
-export type ChartInterval = ChartIntervalBase | "2d" | "3d" | "14d" | "2mth" | "3mth" | "6mth";
+export type ChartInterval = ChartIntervalBase | "2h" | "6h" | "12h" | "2d" | "3d" | "14d" | "2mth" | "3mth" | "6mth";
 
 export type ChartEntry = [timestamp: number, price: number];
 export async function chart(asset: string, range: ChartInterval): Promise<ChartEntry[]> {
