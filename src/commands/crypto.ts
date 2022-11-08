@@ -9,6 +9,8 @@ import { shortToLong } from '../helpers/time';
 
 // Key is unsupported on api so request value instead.
 const ZOOM_OUT: { [name: string]: ChartIntervalBase } = {
+	"2d": "7d",
+	"3d": "7d",
 	"14d": "30d",
 	"2mth": "1y",
 	"3mth": "1y",
@@ -32,7 +34,7 @@ export default class SlashCrypto extends SlashCommand {
 					description: "The time range of the chart",
 					required: false,
 					type: CommandOptionType.STRING,
-					choices: shortToLong(["1h", "1d", "7d", "14d", "30d", "2mth", "3mth", "6mth", "1y", "all"])
+					choices: shortToLong(["1h", "1d", "2d", "3d", "7d", "14d", "30d", "2mth", "3mth", "6mth", "1y", "all"])
 				}
 			],
 			throttling: {
