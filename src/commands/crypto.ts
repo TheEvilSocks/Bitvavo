@@ -60,6 +60,9 @@ export default class SlashCrypto extends SlashCommand {
 
 		const assets = await Assets.get();
 
+		if (!assets || !assets.length)
+			return ctx.sendResults([]);
+
 		const mapped: [string, string, number][] = assets.map(a => {
 			let score: number;
 			if (a.name.toLowerCase().includes(ctx.options.crypto.toLowerCase()))
@@ -78,6 +81,12 @@ export default class SlashCrypto extends SlashCommand {
 	async run(ctx: CommandContext): Promise<boolean | Message> {
 		await ctx.defer();
 		const assets = await Assets.get();
+
+
+		if (!assets || !assets.length)
+			return ctx.send(ErrorResponse("Bitvavo Error", "There are no assets available at this time. Please try again later."));
+
+
 
 		const asset = assets.find(a => a.name.toLowerCase() === ctx.options.crypto.toLowerCase() || a.symbol.toLowerCase() === ctx.options.crypto.toLowerCase());
 		if (!asset)
