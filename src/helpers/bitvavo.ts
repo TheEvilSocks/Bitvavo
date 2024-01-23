@@ -39,7 +39,7 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 		chartData = chartData.filter(a => a[0] >= now - chartRange);
 	}
 
-	const myChart = new Chart(canvas.getContext('2d'), {
+	const myChart = new Chart(canvas.getContext('2d') as unknown as CanvasRenderingContext2D, {
 		type: 'line',
 		options: {
 			elements: {
