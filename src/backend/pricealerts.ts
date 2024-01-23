@@ -2,9 +2,8 @@ import 'chartjs-adapter-moment';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '../.env' });
 
-import { Client as Eris } from "eris";
+import { Client, ComponentTypes } from "oceanic.js";
 import { Op } from "sequelize";
-import { ComponentType } from 'slash-create';
 import { Assets, bitvavo } from "../helpers/bitvavo";
 import { getCurrencySign } from "../helpers/currency";
 import { connection } from "../helpers/database";
@@ -14,7 +13,7 @@ import { PriceAlert } from '../helpers/models/PriceAlert.model';
 import { PriceHistory } from '../helpers/models/PriceHistory.model';
 
 
-const client = new Eris(`Bot ${process.env.DISCORD_TOKEN}`, { restMode: true, intents: [] });
+const client = new Client({ auth: `Bot ${process.env.DISCORD_TOKEN}` });
 
 
 let subscribedCryptos: string[] = [];
@@ -99,9 +98,9 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 
 		const curSign = getCurrencySign('EUR');
 
-		client.getDMChannel(alert.user).then(async (channel) => {
+		client.rest.users.createDM(alert.user).then(async (channel) => {
 			await channel.createMessage({
-				embed: {
+				embeds: [{
 					title: `${crypto.name} price alert`,
 					description: `The price of **${crypto.name}** is **${alert.type}** your threshold of **${curSign} ${alert.threshold}**.`,
 					color: alert.type === 'above' ? 0x00ff00 : 0xff0000,
@@ -122,16 +121,16 @@ async function handleSubscription(ticker: Bitvavo.SubscriptionTicker) {
 							inline: true
 						}
 					]
-				},
+				}],
 				components: [
 					{
 						type: 1,
 						components: [
 							{
-								type: ComponentType.BUTTON,
+								type: ComponentTypes.BUTTON,
 								label: 'Delete alert',
 								style: 4,
-								custom_id: `alert_delete_${alert.symbol}-${alert.type}-${alert.threshold}`
+								customID: `alert_delete_${alert.symbol}-${alert.type}-${alert.threshold}`
 							}
 						]
 					}

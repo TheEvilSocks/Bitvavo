@@ -2,9 +2,9 @@ import 'chartjs-adapter-moment';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: '../.env' });
 
-import { Client as Eris } from "eris";
+import { Client, EmbedOptions } from "oceanic.js";
 import { Op } from "sequelize";
-import { MessageOptions } from 'slash-create';
+import { MessageFile, MessageOptions } from 'slash-create';
 import { Assets, ChartInterval, getGraphMessage } from "../helpers/bitvavo";
 import { connection } from "../helpers/database";
 import { logger } from "../helpers/logger";
@@ -12,7 +12,7 @@ import { Subscriptions } from "../helpers/models/Subscriptions.model";
 import { SubscriptionLog } from '../helpers/models/SubscriptionsLog.model';
 
 
-const client = new Eris(`Bot ${process.env.DISCORD_TOKEN}`, { restMode: true, intents: [] });
+const client = new Client({ auth: `Bot ${process.env.DISCORD_TOKEN}` });
 
 async function sendSubcriptions() {
 	const time = new Date(Date.now() - 60000);
@@ -51,7 +51,14 @@ async function sendSubcriptions() {
 		if (!charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
 		const msg = charts[subscription.symbol][subscription.interval][subscription.chart];
 
-		client.createMessage(subscription.channel, { embeds: msg.embeds }, msg.file).then(async msg => {
+		client.rest.channels.createMessage(subscription.channel, {
+			embeds: msg.embeds as unknown as EmbedOptions[], files: [
+				{
+					name: (msg.file as MessageFile).name,
+					contents: (msg.file as MessageFile).file
+				}
+			]
+		}).then(async msg => {
 			SubscriptionLog.create({
 				message: msg.id,
 				channel: subscription.channel,
@@ -69,7 +76,7 @@ async function sendSubcriptions() {
 			});
 
 			for (const previousLog of previousLogs) {
-				client.deleteMessage(previousLog.channel, previousLog.message);
+				client.rest.channels.deleteMessage(previousLog.channel, previousLog.message);
 				previousLog.destroy();
 			}
 
