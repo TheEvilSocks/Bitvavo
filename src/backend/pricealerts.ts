@@ -25,7 +25,7 @@ let subscribedCryptos: string[] = [];
 	// Every 30 seconds, check the database for new price alerts.
 	setInterval(() => {
 		subscribe();
-	}, 30000);
+	}, 30_000);
 	subscribe();
 
 

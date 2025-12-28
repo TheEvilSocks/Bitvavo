@@ -21,19 +21,22 @@ export type ChartIntervalBase = "1h" | "1d" | "7d" | "30d" | "1y" | "all";
 export type ChartInterval = ChartIntervalBase | "2h" | "6h" | "12h" | "2d" | "3d" | "14d" | "2mth" | "3mth" | "6mth";
 
 export type ChartEntry = [timestamp: number, price: number];
-export async function chart(asset: string, range: ChartInterval): Promise<ChartEntry[]> {
+export async function chart(asset: string, range: ChartInterval): Promise<ChartEntry[]>
+{
 	const res = await axios.get(`https://data.bitvavo.com/v1/chart?range=${range}&asset=${asset}`);
 	return res.data;
 }
 
-export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval = "1h", zoomFrom?: ChartIntervalBase): Promise<MessageOptions> {
+export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval = "1h", zoomFrom?: ChartIntervalBase): Promise<MessageOptions>
+{
 	const ticker = await bitvavo.tickerPrice({ market: `${asset.symbol}-EUR` });
 
 	const canvas = createCanvas(750, 350);
 	let chartData = await chart(asset.symbol, zoomFrom || range);
 
 	// If zoomFrom is set, filter the chartData to that range
-	if (zoomFrom) {
+	if (zoomFrom)
+	{
 		const now = Date.now();
 		const chartRange = parseTimestring(range) * 1000;
 		chartData = chartData.filter(a => a[0] >= now - chartRange);
@@ -100,10 +103,10 @@ export async function getGraphMessage(asset: Bitvavo.Asset, range: ChartInterval
 
 	const curSign = getCurrencySign("EUR");
 	return {
-		file: {
+		files: [{
 			file: attachment,
 			name: `${asset.symbol}-EUR.png`
-		},
+		}],
 		embeds: [
 			{
 				title: `${asset.name} (${shortToLong(range)[0].name})`,

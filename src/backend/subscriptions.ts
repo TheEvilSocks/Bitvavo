@@ -14,7 +14,8 @@ import { SubscriptionLog } from '../helpers/models/SubscriptionsLog.model';
 
 const client = new Client({ auth: `Bot ${process.env.DISCORD_TOKEN}` });
 
-async function sendSubcriptions() {
+async function sendSubcriptions()
+{
 	const time = new Date(Date.now() - 60000);
 	// Read subscriptions from database where lastPosted is null or older than its interval
 	const subscriptions = await Subscriptions.findAll({
@@ -29,7 +30,8 @@ async function sendSubcriptions() {
 
 	// For each subscription, generate the chart.
 	let charts: { [symbol: string]: { [interval: number]: { [timeRange: string]: MessageOptions } } } = {};
-	for (const subscription of subscriptions) {
+	for (const subscription of subscriptions)
+	{
 		// If we've already generated a chart for this subscription type, skip it. This way we avoid generating the same chart multiple times.
 		if (charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
 
@@ -47,18 +49,20 @@ async function sendSubcriptions() {
 	}
 
 	// After generating all the charts, send them to their respective channels.
-	for (const subscription of subscriptions) {
+	for (const subscription of subscriptions)
+	{
 		if (!charts[subscription.symbol]?.[subscription.interval]?.[subscription.chart]) continue;
 		const msg = charts[subscription.symbol][subscription.interval][subscription.chart];
 
 		client.rest.channels.createMessage(subscription.channel, {
 			embeds: msg.embeds as unknown as EmbedOptions[], files: [
 				{
-					name: (msg.file as MessageFile).name,
-					contents: (msg.file as MessageFile).file
+					name: (msg.files as MessageFile[])[0].name,
+					contents: (msg.files as MessageFile[])[0].file
 				}
 			]
-		}).then(async msg => {
+		}).then(async msg =>
+		{
 			SubscriptionLog.create({
 				message: msg.id,
 				channel: subscription.channel,
@@ -75,7 +79,8 @@ async function sendSubcriptions() {
 				}
 			});
 
-			for (const previousLog of previousLogs) {
+			for (const previousLog of previousLogs)
+			{
 				client.rest.channels.deleteMessage(previousLog.channel, previousLog.message);
 				previousLog.destroy();
 			}
@@ -93,7 +98,8 @@ async function sendSubcriptions() {
 	charts = {};
 }
 
-(async () => {
+(async () =>
+{
 	await connection.sync();
 
 	// Run task every 15 minutes, starting at the next 15 minute interval
@@ -103,13 +109,15 @@ async function sendSubcriptions() {
 	await sleep(next15);
 
 	sendSubcriptions();
-	setInterval(async () => {
+	setInterval(async () =>
+	{
 		sendSubcriptions();
 	}, interval);
 
 
 })();
 
-function sleep(ms: number) {
+function sleep(ms: number)
+{
 	return new Promise(resolve => setTimeout(resolve, ms));
 }

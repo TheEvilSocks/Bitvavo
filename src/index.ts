@@ -47,10 +47,14 @@ if (fs.existsSync(path.join(__dirname, "interaction"))) {
 			}
 	}
 }
-connection.sync({ alter: true }).then(() => {
-	creator
+
+(async () =>
+{
+	await connection.sync({ alter: true });
+	await creator
 		.withServer(new ExpressServer())
-		.registerCommandsIn(path.join(__dirname, 'commands'))
-		.syncCommands()
-		.startServer();
-});
+		.registerCommandsIn(path.join(__dirname, 'commands'));
+
+	await creator.syncCommands();
+	await creator.startServer();
+})();

@@ -1,5 +1,5 @@
 import 'chartjs-adapter-moment';
-import { AutocompleteContext, CommandContext, CommandOptionType, Message, SlashCommand, SlashCreator } from "slash-create";
+import { AutocompleteContext, CommandContext, CommandOptionType, InitialCallbackResponse, Message, SlashCommand, SlashCreator } from "slash-create";
 import { compareTwoStrings } from "string-similarity";
 import { Assets, ChartIntervalBase, getGraphMessage } from "../helpers/bitvavo";
 
@@ -78,7 +78,7 @@ export default class SlashCrypto extends SlashCommand {
 		return ctx.sendResults(mapped.filter(a => a[2] > 0.5).sort((a, b) => b[2] - a[2] || a[0].length - b[0].length).slice(0, 20).map(a => ({ name: a[0], value: a[1] })));
 	}
 
-	async run(ctx: CommandContext): Promise<boolean | Message> {
+	async run(ctx: CommandContext): Promise<boolean | InitialCallbackResponse | Message> {
 		await ctx.defer();
 		const assets = await Assets.get();
 
